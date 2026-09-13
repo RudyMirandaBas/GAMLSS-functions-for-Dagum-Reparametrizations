@@ -58,7 +58,7 @@ RDQ1 <- function (mu.link="log", sigma.link="log", nu.link="log", tau.link="iden
             },
           G.dev.incr  = function(y,mu,sigma,nu,tau,...) -2*dRDQ1(y, mu, sigma, nu, tau, log = TRUE), 
                 rqres = expression(rqres(pfun="pRDQ1", type="Continuous", y=y, mu=mu, sigma=sigma, nu=nu, tau=tau)),
-           mu.initial = expression(mu <- rep(median(y),length(y))), 
+           mu.initial = expression(mu <- rep(1, length(y))), 
         sigma.initial = expression(sigma <- rep(1, length(y))), 
            nu.initial = expression(nu <- rep(1, length(y))),
           tau.initial = expression(tau <- rep(.5, length(y))),

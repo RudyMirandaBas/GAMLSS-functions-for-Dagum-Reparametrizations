@@ -1,150 +1,72 @@
+## ============================================================
+## Uso: Rscript MC_RDQ1_simulation.R <tau>
+## Ejemplo: Rscript MC_RDQ1_simulation.R 0.5
+## ============================================================
+
+## --- Leer argumento tau desde la linea de comandos ---
+args <- commandArgs(trailingOnly = TRUE)
+
+if (length(args) < 1) {
+  stop("Debe indicar el valor de tau como argumento.\n",
+       "Uso: Rscript MC_RDQ1_simulation.R <tau>\n",
+       "Ejemplo: Rscript MC_RDQ1_simulation.R 0.5", call. = FALSE)
+}
+
+tau <- as.numeric(args[1])
+
+if (is.na(tau) || tau <= 0 || tau >= 1) {
+  stop("tau debe ser un numero entre 0 y 1 (ej: 0.5). Valor recibido: ", args[1], call. = FALSE)
+}
+
+cat("Corriendo simulacion con tau =", tau, "\n")
+
 library(gamlss)
 library(VGAM)
 
-RDQ1 <- function (mu.link="log", sigma.link="log", nu.link="log") {
-    mstats <- checklink("mu.link", "Reparametrized.Dagum1", substitute(mu.link), c("inverse", "log", "identity"))# dummy
-    dstats <- checklink("sigma.link", "Reparametrized.Dagum1", substitute(sigma.link), c("inverse", "log", "identity"))
-    vstats <- checklink("nu.link", "Reparametrized.Dagum1", substitute(nu.link), c("inverse", "log", "identity"))
+# Load model
+source("./../../models/RDQ1.R")
 
-    structure(
-          list(family = c("RDQ1", "Reparametrized.Dagum1"),
-           parameters = list(mu = TRUE, sigma = TRUE, nu = TRUE),
-                nopar = 3,
-                 type = "Continuous",
-              mu.link = as.character(substitute(mu.link)),
-           sigma.link = as.character(substitute(sigma.link)),
-              nu.link = as.character(substitute(nu.link)),
-           mu.linkfun = mstats$linkfun,
-        sigma.linkfun = dstats$linkfun,
-           nu.linkfun = vstats$linkfun,
-           mu.linkinv = mstats$linkinv,
-        sigma.linkinv = dstats$linkinv,
-           nu.linkinv = vstats$linkinv,
-                mu.dr = mstats$mu.eta,
-             sigma.dr = dstats$mu.eta,
-                nu.dr = vstats$mu.eta,
-                 dldm = function(y, mu, sigma, nu) {
-                    tau = 0.5
-                    return(sigma*(nu*tau^(1/nu) - nu + tau^(1/nu)*(y/mu)^sigma)/(mu*(tau^(1/nu)*(y/mu)^sigma - tau^(1/nu) + 1)))
-                },
-                 dldd = function(y, mu, sigma, nu) {
-                    tau = 0.5
-                    return((nu*sigma*(-log(mu) + log(y))*(tau^(1/nu)*(y/mu)^sigma - tau^(1/nu) + 1) - sigma*tau^(1/nu)*(y/mu)^sigma*(nu + 1)*log(y/mu) + tau^(1/nu)*(y/mu)^sigma - tau^(1/nu) + 1)/(sigma*(tau^(1/nu)*(y/mu)^sigma - tau^(1/nu) + 1)))
-                },
-                 dldv = function(y, mu, sigma, nu) {
-                    tau = 0.5
-                    return((nu^2*(tau^(1/nu) - 1)*(tau^(1/nu)*(y/mu)^sigma - tau^(1/nu) + 1)*(-sigma*log(mu) + sigma*log(y) - log((1 - tau^(1/nu))/tau^(1/nu)) - log((-tau^(1/nu)*(y/mu)^sigma + tau^(1/nu) - 1)/(tau^(1/nu) - 1))) + nu*(tau^(1/nu) - 1)*(tau^(1/nu)*(y/mu)^sigma - tau^(1/nu) + 1) + nu*(tau^(1/nu)*(y/mu)^sigma - tau^(1/nu) + 1)*log(tau) - tau^(1/nu)*(y/mu)^sigma*(nu + 1)*log(tau))/(nu^2*(tau^(1/nu) - 1)*(tau^(1/nu)*(y/mu)^sigma - tau^(1/nu) + 1)))
-                },
-               d2ldm2 = function(y, mu, sigma, nu) {
-                tau = 0.5
-                return(sigma*(sigma*tau^(1/nu)*(y/mu)^sigma*(nu*tau^(1/nu) - nu + tau^(1/nu)*(y/mu)^sigma) + (tau^(1/nu)*(y/mu)^sigma - tau^(1/nu) + 1)*(-nu*tau^(1/nu) + nu - sigma*tau^(1/nu)*(y/mu)^sigma - tau^(1/nu)*(y/mu)^sigma))/(mu^2*(tau^(1/nu)*(y/mu)^sigma - tau^(1/nu) + 1)^2))
-            },
-              d2ldmdd = function(y, mu, sigma, nu) {
-                tau = 0.5
-                return((-sigma*tau^(1/nu)*(y/mu)^sigma*(nu*tau^(1/nu) - nu + tau^(1/nu)*(y/mu)^sigma)*log(y/mu) + (tau^(1/nu)*(y/mu)^sigma - tau^(1/nu) + 1)*(nu*tau^(1/nu) - nu + sigma*tau^(1/nu)*(y/mu)^sigma*log(y/mu) + tau^(1/nu)*(y/mu)^sigma))/(mu*(tau^(1/nu)*(y/mu)^sigma - tau^(1/nu) + 1)^2))
-            },
-              d2ldmdv = function(y, mu, sigma, nu) {
-                tau = 0.5
-                return(sigma*(tau^(1/nu)*((y/mu)^sigma - 1)*(nu*tau^(1/nu) - nu + tau^(1/nu)*(y/mu)^sigma)*log(tau) - (nu^2*(1 - tau^(1/nu)) + nu*tau^(1/nu)*log(tau) + tau^(1/nu)*(y/mu)^sigma*log(tau))*(tau^(1/nu)*(y/mu)^sigma - tau^(1/nu) + 1))/(mu*nu^2*(tau^(1/nu)*(y/mu)^sigma - tau^(1/nu) + 1)^2))
-            },
-               d2ldd2 = function(y, mu, sigma, nu) {
-                tau = 0.5
-                return((nu*sigma^2*tau^(2/nu)*(y/mu)^sigma*log(y/mu)^2 - nu*sigma^2*tau^(1/nu)*(y/mu)^sigma*log(y/mu)^2 + sigma^2*tau^(2/nu)*(y/mu)^sigma*log(y/mu)^2 - sigma^2*tau^(1/nu)*(y/mu)^sigma*log(y/mu)^2 - tau^(2/nu)*(y/mu)^(2*sigma) + 2*tau^(2/nu)*(y/mu)^sigma - tau^(2/nu) - 2*tau^(1/nu)*(y/mu)^sigma + 2*tau^(1/nu) - 1)/(sigma^2*(tau^(2/nu)*(y/mu)^(2*sigma) - 2*tau^(2/nu)*(y/mu)^sigma + tau^(2/nu) + 2*tau^(1/nu)*(y/mu)^sigma - 2*tau^(1/nu) + 1)))
-            },
-              d2ldddv = function(y, mu, sigma, nu) {
-                tau = 0.5
-                return((-tau^(1/nu)*((y/mu)^sigma - 1)*(nu*sigma*(log(mu) - log(y))*(tau^(1/nu)*(y/mu)^sigma - tau^(1/nu) + 1) + sigma*tau^(1/nu)*(y/mu)^sigma*(nu + 1)*log(y/mu) - tau^(1/nu)*(y/mu)^sigma + tau^(1/nu) - 1)*log(tau) + (tau^(1/nu)*(y/mu)^sigma - tau^(1/nu) + 1)*(-nu^2*sigma*(tau^(1/nu)*(y/mu)^sigma*log(y/mu) + (log(mu) - log(y))*(tau^(1/nu)*(y/mu)^sigma - tau^(1/nu) + 1)) + nu*sigma*tau^(1/nu)*((y/mu)^sigma - 1)*(log(mu) - log(y))*log(tau) + tau^(1/nu)*(sigma*(y/mu)^sigma*(nu + 1)*log(y/mu) - (y/mu)^sigma + 1)*log(tau)))/(nu^2*sigma*(tau^(1/nu)*(y/mu)^sigma - tau^(1/nu) + 1)^2))
-            },
-            d2ldv2 = function(y, mu, sigma, nu) {
-                tau = 0.5
-                return((-nu^2*tau^(4/nu)*(y/mu)^(2*sigma) + 2*nu^2*tau^(4/nu)*(y/mu)^sigma - nu^2*tau^(4/nu) + 2*nu^2*tau^(3/nu)*(y/mu)^(2*sigma) - 6*nu^2*tau^(3/nu)*(y/mu)^sigma + 4*nu^2*tau^(3/nu) - nu^2*tau^(2/nu)*(y/mu)^(2*sigma) + 6*nu^2*tau^(2/nu)*(y/mu)^sigma - 6*nu^2*tau^(2/nu) - 2*nu^2*tau^(1/nu)*(y/mu)^sigma + 4*nu^2*tau^(1/nu) - nu^2 + 2*nu*tau^(3/nu)*(y/mu)^(2*sigma)*log(tau) - nu*tau^(3/nu)*(y/mu)^sigma*log(tau)^2 - 2*nu*tau^(3/nu)*(y/mu)^sigma*log(tau) + nu*tau^(3/nu)*log(tau)^2 - 2*nu*tau^(2/nu)*(y/mu)^(2*sigma)*log(tau) + 2*nu*tau^(2/nu)*(y/mu)^sigma*log(tau)^2 + 4*nu*tau^(2/nu)*(y/mu)^sigma*log(tau) - 2*nu*tau^(2/nu)*log(tau)^2 - nu*tau^(1/nu)*(y/mu)^sigma*log(tau)^2 - 2*nu*tau^(1/nu)*(y/mu)^sigma*log(tau) + nu*tau^(1/nu)*log(tau)^2 - tau^(3/nu)*(y/mu)^(2*sigma)*log(tau)^2 + tau^(3/nu)*(y/mu)^sigma*log(tau)^2 - tau^(1/nu)*(y/mu)^sigma*log(tau)^2)/(nu^4*(tau^(4/nu)*(y/mu)^(2*sigma) - 2*tau^(4/nu)*(y/mu)^sigma + tau^(4/nu) - 2*tau^(3/nu)*(y/mu)^(2*sigma) + 6*tau^(3/nu)*(y/mu)^sigma - 4*tau^(3/nu) + tau^(2/nu)*(y/mu)^(2*sigma) - 6*tau^(2/nu)*(y/mu)^sigma + 6*tau^(2/nu) + 2*tau^(1/nu)*(y/mu)^sigma - 4*tau^(1/nu) + 1)))
-            },
-          G.dev.incr  = function(y,mu,sigma,nu,...) -2*dRDQ1(y, mu, sigma, nu, log = TRUE), 
-                rqres = expression(rqres(pfun="pRDQ1", type="Continuous", y=y, mu=mu, sigma=sigma, nu=nu)),
-           mu.initial = expression(mu <- rep(median(y),length(y))), 
-        sigma.initial = expression(sigma <- rep(1, length(y))), 
-           nu.initial = expression(nu <- rep(1, length(y))),
-             mu.valid = function(mu) all(mu > 0), 
-          sigma.valid = function(sigma)  all(sigma > 0),
-             nu.valid = function(nu) all(nu > 0),
-              y.valid = function(y)  all(y > 0),
-                 mean = function(mu, sigma, nu) {
-                    a = sigma
-                    b = mu * (0.5^(-1/nu)-1)^(1/sigma)
-                    p = nu
-                    return(ifelse(a > 1, p * b * beta(p+1/a, 1-1/a), Inf))
-                  },
-             variance = function(mu, sigma, nu) {
-                a = sigma
-                b = mu * (0.5^(-1/nu)-1)^(1/sigma)
-                p = nu
-                return(ifelse(a > 2, b^2 * (beta(1-2/a, p+2/a) - beta(1-1/a, p+1/a)^2), Inf))
-              }
-          ),
-                class = c("gamlss.family","family"))
-}
-
-dRDQ1 <- function(x, mu = 1, sigma = 1, nu = 1.5, log = FALSE) {
-  tau <- 0.5
-  mu2 <- mu * (tau^(-1 / nu) - 1)^(1 / sigma)
-  ddagum(x = x, scale = mu2, shape1.a = sigma, shape2.p = nu, log = log)
-}
-
-pRDQ1 <- function(q, mu = 1, sigma = 1, nu = 1.5, lower.tail = TRUE, log.p = FALSE) {
-  tau <- 0.5
-  mu2 <- mu * (tau^(-1 / nu) - 1)^(1 / sigma)
-  pdagum(q = q, scale = mu2, shape1.a = sigma, shape2.p = nu, lower.tail = lower.tail, log.p = log.p)
-}
-
-qRDQ1 <- function(p, mu = 1, sigma = 1, nu = 1.5, lower.tail = TRUE, log.p = FALSE) {
-  tau <- 0.5
-  mu2 <- mu * (tau^(-1 / nu) - 1)^(1 / sigma)
-  qdagum(p = p, scale = mu2, shape1.a = sigma, shape2.p = nu, lower.tail = lower.tail, log.p = log.p)
-}
-
-rRDQ1 <- function(n, mu = 1, sigma = 1, nu = 1.5) {
-  tau <- 0.5
-  mu2 <- mu * (tau^(-1 / nu) - 1)^(1 / sigma)
-  rdagum(n = n, scale = mu2, shape1.a = sigma, shape2.p = nu)
-}
-
-#######################################
-############# Monte Carlo #############
-#######################################
+# Monte Carlo Study
 
 library(parallel)
+ncores <- max(1, detectCores() - 1)
 
-MCllikelihood_estimation <- function(n = 1000, mu_ = c(1, .5, .2), sigma_ = c(.5, .4), nu_ = c(-.2)) {
+MCllikelihood_estimation <- function(n = 1000, mu_ = c(1, .5, .2), sigma_ = c(.5, .4), nu_ = c(-.2), tau = 0.5) {
 
   z1 <- as.numeric(scale(runif(n)))
   z2 <- as.numeric(scale(rnorm(n)))
-  
+
   X1 <- model.matrix(~z1+z2)                   #matriz de diseño de mu
   X2 <- model.matrix(~z1)                      #matriz de diseño de sigma
   X3 <- matrix(1, nrow = n)                    #matriz de diseño de nu
   colnames(X3) <- "(Intercept)"
-  
+
   mu.true <- as.vector(exp(X1 %*% mu_))        # log-link
   sigma.true <- as.vector(exp(X2 %*% sigma_))  # log-link
   nu.true <- as.vector(exp(X3 %*% nu_))        # log-link-desplazado (nu > 1)
-  y <- rRDQ1(n, mu.true, sigma.true, nu.true)  # simulando valores
-  
+  y <- rRDQ1(n, mu.true, sigma.true, nu.true, tau)  # simulando valores
+
   # GAMLSS
   aux <- gamlss(y ~ X1[, -1, drop=FALSE],
                 sigma.fo = ~X2[, -1, drop = FALSE],
+                tau.fix = TRUE, tau.start = tau,
                 family = RDQ1, method = RS(1000),
                 control = gamlss.control(trace = FALSE))
   capture.output(res.gamlss <- summary(aux)[, 1:2], file = nullfile())
 
   res <- cbind(c(mu_, sigma_, nu_),                              # REAL
-               res.gamlss)                                       # GAMLSS
+               res.gamlss[-7, ])                                 # GAMLSS
 
   colnames(res) <- c("true",
                      "est gamlss", "se gamlss")
   rownames(res) <- c(paste("beta1", 1:ncol(X1), sep = ""),
                      paste("beta2", 1:ncol(X2), sep = ""),
                      paste("beta3", 1:ncol(X3), sep = ""))
-  return(list(Results = res, LL = c(gamlss = logLik(aux)), Converged = aux$converged))
+
+  return(list(Results = res,
+              LL = c(gamlss = logLik(aux)),
+              Converged = aux$converged,
+              Iterations = aux$iter))       # <-- iteraciones de gamlss
 }
 
 # to use in mclapply
@@ -156,7 +78,7 @@ for (i in 2:4000) {
   seeds[[i]] <- nextRNGStream(seeds[[i - 1]])
 }
 
-prob <- function(i, theta, seeds, casos.n) {
+prob <- function(i, theta, seeds, casos.n, tau) {
   if (i <= 1000) {
     n <- casos.n[1]
   } else if (i <= 2000) {
@@ -170,17 +92,36 @@ prob <- function(i, theta, seeds, casos.n) {
   .Random.seed <<- seeds[[i]]
   temp <- TRUE
   errors <- -1
+  elapsed_secs <- NA          # <-- tiempo del intento exitoso (segundos)
+
   while (temp) {
+    t_start <- Sys.time()     # <-- inicio de este intento
+
     testing <- try(MCllikelihood_estimation(n = n,
                                             mu_ = theta[1:3],
                                             sigma_ = theta[4:5],
-                                            nu_ = theta[6]),
+                                            nu_ = theta[6],
+                                            tau = tau),
                    silent = TRUE)
-		temp <- grepl("Error", testing)[1]
+
+    t_end <- Sys.time()       # <-- fin de este intento
+
+    temp <- grepl("Error", testing)[1]
     errors <- errors + 1
+
+    if (!temp) {
+      # este intento fue exitoso -> guardamos su tiempo
+      elapsed_secs <- as.numeric(difftime(t_end, t_start, units = "secs"))
+    }
   }
+
   testing[["Errors"]] <- errors
-  cat("%:", round(i / 4000 * 100, 3), " (", i, "/", 4000, ")  n:", n, "\n", sep = "")
+  testing[["Time"]] <- elapsed_secs   # <-- tiempo (seg) del intento exitoso
+  # testing[["Iterations"]] ya viene incluido desde MCllikelihood_estimation()
+
+  cat("%:", round(i / 4000 * 100, 3), " (", i, "/", 4000, ")  n:", n,
+      "  time:", round(elapsed_secs, 3), "s  gamlss iters:", testing[["Iterations"]],
+      "\n", sep = "")
   return(testing)
 }
 
@@ -197,62 +138,91 @@ casos.par <- matrix(c(1, .5, .2, .5, .4, -.2,
 system.time(testing.p1 <- mclapply(1:4000, prob,
                                    seeds = seeds,
                                    casos.n = casos.n,
-                                   theta = casos.par[1, ])) # 5 min approx
+                                   theta = casos.par[1, ],
+                                   tau = tau, mc.cores = ncores)) # 5 min approx
 system.time(testing.p2 <- mclapply(1:4000, prob,
                                    seeds = seeds,
                                    casos.n = casos.n,
-                                   theta = casos.par[2, ])) # 5 min approx
+                                   theta = casos.par[2, ],
+                                   tau = tau, mc.cores = ncores)) # 5 min approx
 
-setwd("./results.RDQ1/")
+## --- Carpeta de resultados con el cuantil (tau) en la ruta ---
+tau_str <- gsub("\\.", "_", format(tau, trim = TRUE))     # 0.5 -> "0_5", para evitar puntos en la ruta
+results_dir <- paste0("./results.RDQ1/tau_", tau_str, "/")
+
+dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
+setwd(results_dir)
 
 reps <- 1000
 for (i in 1:length(casos.n)) {
-  
+
   ############ set 1
 
   temp_p1 <- testing.p1[(1 + reps * (i - 1)):(reps * i)]
 
   # LL
-  LL_p1 <- sapply(temp_p1, "[[", 2)
+  LL_p1 <- sapply(temp_p1, "[[", "LL")
 	name_ll_p1 <- paste("LL_p1_", casos.n[i], '.csv', sep = '')
   write.csv(LL_p1, file = name_ll_p1, row.names = FALSE)
 
   # pars
-  pars_p1 <- t(sapply(temp_p1, "[[", 1))
+  pars_p1 <- t(sapply(temp_p1, "[[", "Results"))
 	name_pars_p1 <- paste("pars_p1_", casos.n[i], '.csv', sep = '')
   write.csv(pars_p1, file = name_pars_p1, row.names = FALSE)
-  
+
   # Converged
-  conv_p1 <- sapply(temp_p1, "[[", 3)
+  conv_p1 <- sapply(temp_p1, "[[", "Converged")
 	name_conv_p1 <- paste("noconv_p1_", casos.n[i], '.csv', sep = '')
   write.csv(sum(!conv_p1), file = name_conv_p1, row.names = FALSE)
-  
+
   # Errors
-  errors_p1 <- t(sapply(temp_p1, "[[", 4))
+  errors_p1 <- t(sapply(temp_p1, "[[", "Errors"))
 	name_errors_p1 <- paste("errors_p1_", casos.n[i], '.csv', sep = '')
   write.csv(sum(errors_p1), file = name_errors_p1, row.names = FALSE)
+
+  # Time (tiempo en segundos del intento exitoso)
+  time_p1 <- sapply(temp_p1, "[[", "Time")
+	name_time_p1 <- paste("time_p1_", casos.n[i], '.csv', sep = '')
+  write.csv(time_p1, file = name_time_p1, row.names = FALSE)
+
+  # Iterations (numero de iteraciones de gamlss)
+  giter_p1 <- sapply(temp_p1, "[[", "Iterations")
+	name_giter_p1 <- paste("giter_p1_", casos.n[i], '.csv', sep = '')
+  write.csv(giter_p1, file = name_giter_p1, row.names = FALSE)
 
   ############ set 2
 
   temp_p2 <- testing.p2[(1 + reps * (i - 1)):(reps * i)]
 
   # LL
-  LL_p2 <- sapply(temp_p2, "[[", 2)
+  LL_p2 <- sapply(temp_p2, "[[", "LL")
 	name_ll_p2 <- paste("LL_p2_", casos.n[i], '.csv', sep = '')
   write.csv(LL_p2, file = name_ll_p2, row.names = FALSE)
 
   # pars
-  pars_p2 <- t(sapply(temp_p2, "[[", 1))
+  pars_p2 <- t(sapply(temp_p2, "[[", "Results"))
 	name_pars_p2 <- paste("pars_p2_", casos.n[i], '.csv', sep = '')
   write.csv(pars_p2, file = name_pars_p2, row.names = FALSE)
-  
+
   # Converged
-  conv_p2 <- sapply(temp_p2, "[[", 3)
+  conv_p2 <- sapply(temp_p2, "[[", "Converged")
 	name_conv_p2 <- paste("noconv_p2_", casos.n[i], '.csv', sep = '')
   write.csv(sum(!conv_p2), file = name_conv_p2, row.names = FALSE)
 
   # Errors
-  errors_p2 <- t(sapply(temp_p2, "[[", 4))
+  errors_p2 <- t(sapply(temp_p2, "[[", "Errors"))
 	name_errors_p2 <- paste("errors_p2_", casos.n[i], '.csv', sep = '')
   write.csv(sum(errors_p2), file = name_errors_p2, row.names = FALSE)
+
+  # Time (tiempo en segundos del intento exitoso)
+  time_p2 <- sapply(temp_p2, "[[", "Time")
+	name_time_p2 <- paste("time_p2_", casos.n[i], '.csv', sep = '')
+  write.csv(time_p2, file = name_time_p2, row.names = FALSE)
+
+  # Iterations (numero de iteraciones de gamlss)
+  giter_p2 <- sapply(temp_p2, "[[", "Iterations")
+	name_giter_p2 <- paste("giter_p2_", casos.n[i], '.csv', sep = '')
+  write.csv(giter_p2, file = name_giter_p2, row.names = FALSE)
 }
+
+cat("Simulacion terminada. Resultados guardados en:", normalizePath(getwd()), "\n")
