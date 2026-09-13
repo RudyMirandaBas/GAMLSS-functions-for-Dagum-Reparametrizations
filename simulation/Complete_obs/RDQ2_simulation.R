@@ -30,6 +30,7 @@ source("./../../models/RDQ2.R")
 #######################################
 
 library(parallel)
+ncores <- max(1, detectCores() - 1)
 
 MCllikelihood_estimation <- function(n = 1000, mu_ = c(1, .5, .2), sigma_ = c(.5, .4), nu_ = c(-.2), tau = 0.5) {
 
@@ -137,12 +138,12 @@ system.time(testing.p1 <- mclapply(1:4000, prob,
                                    seeds = seeds,
                                    casos.n = casos.n,
                                    theta = casos.par[1, ],
-                                   tau = tau)) # 8 min approx
+                                   tau = tau, mc.cores = ncores)) # 8 min approx
 system.time(testing.p2 <- mclapply(1:4000, prob,
                                    seeds = seeds,
                                    casos.n = casos.n,
                                    theta = casos.par[2, ],
-                                   tau = tau)) # 7 min approx
+                                   tau = tau, mc.cores = ncores)) # 7 min approx
 
 ## --- Carpeta de resultados con el cuantil (tau) en la ruta ---
 tau_str <- gsub("\\.", "_", format(tau, trim = TRUE))     # 0.5 -> "0_5", para evitar puntos en la ruta
