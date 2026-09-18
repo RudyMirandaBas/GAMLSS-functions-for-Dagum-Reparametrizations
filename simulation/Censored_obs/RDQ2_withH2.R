@@ -88,10 +88,19 @@ MCllikelihood_estimation <- function(n = 1000, mu_ = c(1, .5, .2), sigma_ = c(.5
                 tau.fix = TRUE, tau.start = tau,
                 family = cens(RDQ2), method = RS(1000),
                 control = gamlss.control(trace = FALSE))
-  capture.output(res.gamlss <- summary(aux)[, 1:2], file = nullfile())
 
-  res <- cbind(c(mu_, sigma_, nu_),                              # REAL
-               res.gamlss[-7, ])                                 # GAMLSS (se descarta la fila de tau, fijo)
+  res.gamlss <- c(
+    coef(aux, what = "mu"),
+    coef(aux, what = "sigma"),
+    coef(aux, what = "nu")
+  )
+
+  # Solo estimación puntual; SE de GAMLSS no se calcula
+  res <- cbind(
+    c(mu_, sigma_, nu_),   # REAL
+    res.gamlss,            # estimación GAMLSS
+    NA                     # SE GAMLSS
+  )
 
   H <- hessian(LogLS, x0 = res[, 2], DM = cbind(X1, X2, X3),
                data = Surv(time = pmin(y, C), event = y < C),
