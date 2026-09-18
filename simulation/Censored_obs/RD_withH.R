@@ -38,6 +38,33 @@ set.seed(123)
 
 source("./../../models/RD.R")
 
+# Log Likelihood
+
+library(pracma)
+
+LogLS <- function(theta, DM, data) {
+  mu_ <- theta[1:3]; sigma_ <- theta[4:5]; nu_ <- theta[6]
+  
+  X1 <- DM[, 1:3]; X2 <- DM[, 4:5]; X3 <- DM[, 6]
+
+  mu    <- as.vector(exp(X1 %*% mu_))       # Log-link
+  sigma <- as.vector(exp(X2 %*% sigma_))    # Log-link
+  nu    <- as.vector(1 + exp(X3 * nu_))     # Log-link
+  T <- data[, 1]
+  I <- data[, 2]
+
+  indx_C <- which(I == 0)
+
+  T_C <- T[indx_C]
+  mu_C <- mu[indx_C]; sigma_C <- sigma[indx_C]; nu_C <- nu[indx_C]
+  
+  T_F <- T[-indx_C]
+  mu_F <- mu[-indx_C]; sigma_F <- sigma[-indx_C]; nu_F <- nu[-indx_C]
+
+  return(sum(dRD(T_F, mu = mu_F, sigma = sigma_F, nu = nu_F, log = TRUE)) +
+         sum(pRD(T_C, mu = mu_C, sigma = sigma_C, nu = nu_C, lower.tail = FALSE, log.p = TRUE)))
+}
+
 #######################################
 ############# Monte Carlo #############
 #######################################
