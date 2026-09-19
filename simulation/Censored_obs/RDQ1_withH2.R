@@ -203,7 +203,7 @@ system.time(testing.p2 <- mclapply(1:4000, prob,
                                    casos.n = casos.n,
                                    theta = casos.par[2, ],
                                    tau = tau,
-                                   censorship = censorship)) # 77 min approx cens = 0.1
+                                   censorship = censorship, mc.cores = ncores)) # 77 min approx cens = 0.1
 
 ## --- Carpeta de resultados: RDQ1 / RDQ1_<censura> / tau_<tau> ---
 cens_pct <- censorship * 100

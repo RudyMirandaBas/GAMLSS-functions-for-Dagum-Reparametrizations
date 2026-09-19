@@ -15,8 +15,9 @@
 set -e  # si algo falla, se detiene en vez de seguir silenciosamente
 
 #TAUS=(0.1 0.25 0.5 0.75 0.9)
-TAUS=(0.5 0.75 0.9)
-CENS=(0.1 0.25 0.5)
+TAUS=(0.1)
+#CENS=(0.1 0.25 0.5)
+CENS=(0.1)
 
 echo "===== Corriendo RDQ1 con censura ====="
 for cens in "${CENS[@]}"; do
