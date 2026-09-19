@@ -12,7 +12,8 @@
 
 set -e  # si algo falla, se detiene en vez de seguir silenciosamente
 
-NUS=(1.05 1.1 1.25 1.5)
+#NUS=(1.05 1.1 1.25 1.5)
+NUS=(1.5)
 CENS=(0.1 0.25 0.5)
 
 echo "===== Corriendo RD con censura ====="

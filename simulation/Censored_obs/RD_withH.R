@@ -193,16 +193,16 @@ casos.par <- matrix(c(1, .5, .2, .5, .4, nu_coef,
 # mclapply solo funciona en Linux y MacOS,
 # no en windows. Si corre esto en windows hace un lapply solamente.
 # Forma mas facil de aplicar calculo paralelo.
-system.time(testing.p1 <- mclapply(1:4000, prob,
-                                   seeds = seeds,
-                                   casos.n = casos.n,
-                                   theta = casos.par[1, ],
-                                   censorship = censorship, mc.cores = ncores)) # 8 min approx
-#system.time(testing.p2 <- mclapply(1:4000, prob,
+#system.time(testing.p1 <- mclapply(1:4000, prob,
 #                                   seeds = seeds,
 #                                   casos.n = casos.n,
-#                                   theta = casos.par[2, ],
-#                                   censorship = censorship, mc.cores = ncores)) # 7 min approx
+#                                   theta = casos.par[1, ],
+#                                   censorship = censorship, mc.cores = ncores)) # 8 min approx
+system.time(testing.p2 <- mclapply(1:4000, prob,
+                                   seeds = seeds,
+                                   casos.n = casos.n,
+                                   theta = casos.par[2, ],
+                                   censorship = censorship, mc.cores = ncores)) # 7 min approx
 
 ## --- Carpeta de resultados: RD / RD_<censura> / nu_<nu> ---
 cens_pct <- censorship * 100
@@ -222,73 +222,73 @@ setwd(results_dir)
 reps <- 1000
 for (i in 1:length(casos.n)) {
 
-  ############ set 1
-
-  temp_p1 <- testing.p1[(1 + reps * (i - 1)):(reps * i)]
-
-  # LL
-  LL_p1 <- sapply(temp_p1, "[[", "LL")
-	name_ll_p1 <- paste("LL_p1_", casos.n[i], '.csv', sep = '')
-  write.csv(LL_p1, file = name_ll_p1, row.names = FALSE)
-
-  # pars
-  pars_p1 <- t(sapply(temp_p1, "[[", "Results"))
-	name_pars_p1 <- paste("pars_p1_", casos.n[i], '.csv', sep = '')
-  write.csv(pars_p1, file = name_pars_p1, row.names = FALSE)
-
-  # Converged
-  conv_p1 <- sapply(temp_p1, "[[", "Converged")
-	name_conv_p1 <- paste("noconv_p1_", casos.n[i], '.csv', sep = '')
-  write.csv(sum(!conv_p1), file = name_conv_p1, row.names = FALSE)
-
-  # Errors
-  errors_p1 <- t(sapply(temp_p1, "[[", "Errors"))
-	name_errors_p1 <- paste("errors_p1_", casos.n[i], '.csv', sep = '')
-  write.csv(sum(errors_p1), file = name_errors_p1, row.names = FALSE)
-
-  # Time (tiempo en segundos del intento exitoso)
-  time_p1 <- sapply(temp_p1, "[[", "Time")
-	name_time_p1 <- paste("time_p1_", casos.n[i], '.csv', sep = '')
-  write.csv(time_p1, file = name_time_p1, row.names = FALSE)
-
-  # Iterations (numero de iteraciones de gamlss)
-  giter_p1 <- sapply(temp_p1, "[[", "Iterations")
-	name_giter_p1 <- paste("giter_p1_", casos.n[i], '.csv', sep = '')
-  write.csv(giter_p1, file = name_giter_p1, row.names = FALSE)
-
-#  ############ set 2
+#  ############ set 1
 #
-#  temp_p2 <- testing.p2[(1 + reps * (i - 1)):(reps * i)]
+#  temp_p1 <- testing.p1[(1 + reps * (i - 1)):(reps * i)]
 #
 #  # LL
-#  LL_p2 <- sapply(temp_p2, "[[", "LL")
-#	name_ll_p2 <- paste("LL_p2_", casos.n[i], '.csv', sep = '')
-#  write.csv(LL_p2, file = name_ll_p2, row.names = FALSE)
+#  LL_p1 <- sapply(temp_p1, "[[", "LL")
+#	name_ll_p1 <- paste("LL_p1_", casos.n[i], '.csv', sep = '')
+#  write.csv(LL_p1, file = name_ll_p1, row.names = FALSE)
 #
 #  # pars
-#  pars_p2 <- t(sapply(temp_p2, "[[", "Results"))
-#	name_pars_p2 <- paste("pars_p2_", casos.n[i], '.csv', sep = '')
-#  write.csv(pars_p2, file = name_pars_p2, row.names = FALSE)
+#  pars_p1 <- t(sapply(temp_p1, "[[", "Results"))
+#	name_pars_p1 <- paste("pars_p1_", casos.n[i], '.csv', sep = '')
+#  write.csv(pars_p1, file = name_pars_p1, row.names = FALSE)
 #
 #  # Converged
-#  conv_p2 <- sapply(temp_p2, "[[", "Converged")
-#	name_conv_p2 <- paste("noconv_p2_", casos.n[i], '.csv', sep = '')
-#  write.csv(sum(!conv_p2), file = name_conv_p2, row.names = FALSE)
+#  conv_p1 <- sapply(temp_p1, "[[", "Converged")
+#	name_conv_p1 <- paste("noconv_p1_", casos.n[i], '.csv', sep = '')
+#  write.csv(sum(!conv_p1), file = name_conv_p1, row.names = FALSE)
 #
 #  # Errors
-#  errors_p2 <- t(sapply(temp_p2, "[[", "Errors"))
-#	name_errors_p2 <- paste("errors_p2_", casos.n[i], '.csv', sep = '')
-#  write.csv(sum(errors_p2), file = name_errors_p2, row.names = FALSE)
+#  errors_p1 <- t(sapply(temp_p1, "[[", "Errors"))
+#	name_errors_p1 <- paste("errors_p1_", casos.n[i], '.csv', sep = '')
+#  write.csv(sum(errors_p1), file = name_errors_p1, row.names = FALSE)
 #
 #  # Time (tiempo en segundos del intento exitoso)
-#  time_p2 <- sapply(temp_p2, "[[", "Time")
-#	name_time_p2 <- paste("time_p2_", casos.n[i], '.csv', sep = '')
-#  write.csv(time_p2, file = name_time_p2, row.names = FALSE)
+#  time_p1 <- sapply(temp_p1, "[[", "Time")
+#	name_time_p1 <- paste("time_p1_", casos.n[i], '.csv', sep = '')
+#  write.csv(time_p1, file = name_time_p1, row.names = FALSE)
 #
 #  # Iterations (numero de iteraciones de gamlss)
-#  giter_p2 <- sapply(temp_p2, "[[", "Iterations")
-#	name_giter_p2 <- paste("giter_p2_", casos.n[i], '.csv', sep = '')
-#  write.csv(giter_p2, file = name_giter_p2, row.names = FALSE)
+#  giter_p1 <- sapply(temp_p1, "[[", "Iterations")
+#	name_giter_p1 <- paste("giter_p1_", casos.n[i], '.csv', sep = '')
+#  write.csv(giter_p1, file = name_giter_p1, row.names = FALSE)
+
+  ############ set 2
+
+  temp_p2 <- testing.p2[(1 + reps * (i - 1)):(reps * i)]
+
+  # LL
+  LL_p2 <- sapply(temp_p2, "[[", "LL")
+	name_ll_p2 <- paste("LL_p2_", casos.n[i], '.csv', sep = '')
+  write.csv(LL_p2, file = name_ll_p2, row.names = FALSE)
+
+  # pars
+  pars_p2 <- t(sapply(temp_p2, "[[", "Results"))
+	name_pars_p2 <- paste("pars_p2_", casos.n[i], '.csv', sep = '')
+  write.csv(pars_p2, file = name_pars_p2, row.names = FALSE)
+
+  # Converged
+  conv_p2 <- sapply(temp_p2, "[[", "Converged")
+	name_conv_p2 <- paste("noconv_p2_", casos.n[i], '.csv', sep = '')
+  write.csv(sum(!conv_p2), file = name_conv_p2, row.names = FALSE)
+
+  # Errors
+  errors_p2 <- t(sapply(temp_p2, "[[", "Errors"))
+	name_errors_p2 <- paste("errors_p2_", casos.n[i], '.csv', sep = '')
+  write.csv(sum(errors_p2), file = name_errors_p2, row.names = FALSE)
+
+  # Time (tiempo en segundos del intento exitoso)
+  time_p2 <- sapply(temp_p2, "[[", "Time")
+	name_time_p2 <- paste("time_p2_", casos.n[i], '.csv', sep = '')
+  write.csv(time_p2, file = name_time_p2, row.names = FALSE)
+
+  # Iterations (numero de iteraciones de gamlss)
+  giter_p2 <- sapply(temp_p2, "[[", "Iterations")
+	name_giter_p2 <- paste("giter_p2_", casos.n[i], '.csv', sep = '')
+  write.csv(giter_p2, file = name_giter_p2, row.names = FALSE)
 }
 
 cat("Simulacion terminada. Resultados guardados en:", normalizePath(getwd()), "\n")
