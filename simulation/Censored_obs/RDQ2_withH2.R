@@ -62,6 +62,8 @@ LogLS <- function(theta, DM, data, tau) {
 #######################################
 
 library(parallel)
+ncores <- max(1, detectCores() - 1)
+
 source("./find_delta.R")
 
 MCllikelihood_estimation <- function(n = 1000, mu_ = c(1, .5, .2), sigma_ = c(.5, .4), nu_ = c(-.2), tau = 0.5, censorship = 0.1) {
@@ -194,13 +196,13 @@ system.time(testing.p1 <- mclapply(1:4000, prob,
                                    casos.n = casos.n,
                                    theta = casos.par[1, ],
                                    tau = tau,
-                                   censorship = censorship)) # 8 min approx
+                                   censorship = censorship, mc.cores = ncores)) # 8 min approx
 system.time(testing.p2 <- mclapply(1:4000, prob,
                                    seeds = seeds,
                                    casos.n = casos.n,
                                    theta = casos.par[2, ],
                                    tau = tau,
-                                   censorship = censorship)) # 7 min approx
+                                   censorship = censorship, mc.cores = ncores)) # 7 min approx
 
 ## --- Carpeta de resultados: RDQ2 / RDQ2_<censura> / tau_<tau> ---
 cens_pct <- censorship * 100

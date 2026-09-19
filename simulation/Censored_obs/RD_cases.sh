@@ -19,7 +19,7 @@ echo "===== Corriendo RD con censura ====="
 for cens in "${CENS[@]}"; do
   for nu in "${NUS[@]}"; do
     echo "[RD] censorship = ${cens}  nu = ${nu} - iniciando"
-    Rscript MC_RD_censored_simulation.R "${nu}" "${cens}"
+    Rscript RD_withH.R "${nu}" "${cens}"
     echo "[RD] censorship = ${cens}  nu = ${nu} - terminado"
   done
 done
